@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Passimoritz/hostwerk-public/main/sdk/manifest.schema.json",
+  "id": "pwa",
+  "name": {
+    "de": "Hostwerk-App",
+    "en": "Hostwerk app"
+  },
+  "description": {
+    "de": "Hostwerk aufs Handy – als Web-App für Android und iPhone, ohne App-Store. Handy per QR-Code koppeln, gekoppelte Geräte im Blick und einzeln sperren, neue Geräte erst nach Freigabe am PC. Für dich und für Mitglieder aus Team & Rollen, mit deren Rechten.",
+    "en": "Hostwerk on your phone – as a web app for Android and iPhone, without an app store. Pair a phone with a QR code, keep an eye on paired devices and block them one by one, new devices only after approval on the PC. For you and for members from Team & roles, with their rights."
+  },
+  "version": "1.0.0",
+  "author": "Hostwerk",
+  "homepage": "https://github.com/Passimoritz/hostwerk-ext-pwa",
+  "license": "MIT",
+  "icon": "icon.svg",
+  "banner": "banner.svg",
+  "color": "#ea580c",
+  "category": "security",
+  "hostwerk": ">=3.0.0",
+  "sdkVersion": "3.4",
+  "permissions": [
+    "native",
+    "storage"
+  ],
+  "page": {
+    "title": {
+      "de": "Hostwerk-App",
+      "en": "Hostwerk app"
+    },
+    "description": {
+      "de": "Hostwerk aufs Handy: koppeln, Geräte, Sicherheit.",
+      "en": "Hostwerk on your phone: pairing, devices, security."
+    },
+    "icon": "smartphone",
+    "nav": false
+  },
+  "backend": "server/index.js",
+  "ui": "ui/index.js"
+}
