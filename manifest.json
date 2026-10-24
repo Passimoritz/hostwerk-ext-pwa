@@ -9,7 +9,7 @@
     "de": "Hostwerk aufs Handy – als Web-App für Android und iPhone, ohne App-Store. Handy per QR-Code koppeln, gekoppelte Geräte im Blick und einzeln sperren, neue Geräte erst nach Freigabe am PC. Für dich und für Mitglieder aus Team & Rollen, mit deren Rechten.",
     "en": "Hostwerk on your phone – as a web app for Android and iPhone, without an app store. Pair a phone with a QR code, keep an eye on paired devices and block them one by one, new devices only after approval on the PC. For you and for members from Team & roles, with their rights."
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Hostwerk",
   "homepage": "https://github.com/Passimoritz/hostwerk-ext-pwa",
   "license": "MIT",

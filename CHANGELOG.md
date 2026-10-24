@@ -1,3 +1,7 @@
+## 1.0.1
+
+- New animated icon and banner in the common Hostwerk style (isometric block). / Neues animiertes Symbol und Banner im gemeinsamen Hostwerk-Stil (isometrischer Block).
+
 ## 1.0.0
 
 - The phone app as its own extension (Hostwerk with SDK 3.4): before, the phone view `#/handy`, the web app manifest, the service worker and the page `/app-laden` were built into Hostwerk. Small screens still start in the phone view, old QR codes still work. / Die Handy-App als eigene Erweiterung: vorher waren Handy-Ansicht, Manifest, Service Worker und `/app-laden` in Hostwerk eingebaut. Schmale Bildschirme starten weiter in der Handy-Ansicht, alte QR-Codes funktionieren weiter.
