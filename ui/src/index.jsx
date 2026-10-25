@@ -218,7 +218,7 @@ function TasksTab() {
   const load = () => get('/tasks').then(setD).catch(() => setD({ list: [] }));
   useEffect(() => { load(); }, []);
   useRefresh(load); // reload quietly after installing/changing/finished jobs
-  if (!d) return <section className="m-card"><div className="small muted">Loading …</div></section>;
+  if (!d) return <section className="m-card"><div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div></section>;
   return (
     <section className="m-card">
       <h3><CalendarClock size={16} />Tasks {d.paused && <span className="m-state warn">paused</span>}</h3>
@@ -253,7 +253,7 @@ function LogTab() {
         <div className="m-chips" role="group" aria-label="Filter">{LOG_FILTERS.map(([id, l]) => <button key={id} type="button" className={`chip ${f === id ? 'on' : ''}`} aria-pressed={f === id} onClick={() => setF(id)}>{l}</button>)}</div>
       </section>
       {show('gesundheit') && latest && <section className="m-card"><h3><HeartPulse size={16} />Health <span className={`m-state ${latest.score >= 85 ? 'ok' : latest.score >= 60 ? 'warn' : 'err'}`}>{latest.score}/100</span></h3>{latest.problems.slice(0, 5).map((p, i) => <div key={i} className="small">• <Keep>{p.text}</Keep></div>)}{latest.problems.length === 0 && <div className="small muted">All fine.</div>}<a className="m-btn sm" href="#/system/zustand/gesundheit" style={{ marginTop: 8 }}>Report <ChevronRight size={14} /></a></section>}
-      {show('vorfaelle') && <section className="m-card"><h3><AlertTriangle size={16} />Incidents</h3>{!inc ? <div className="small muted">Loading …</div> : incShown.length === 0 ? <div className="small muted">{needle ? 'Nothing found.' : 'No incidents.'}</div> : incShown.slice(0, needle ? 30 : 8).map((x) => <div key={x.id || x.t} className="small"><b><Keep>{x.name || x.svc}</Keep></b> – <Keep>{x.title || x.error}</Keep> <span className="tiny muted">{fmtDate(x.t || x.at)}</span></div>)}</section>}
+      {show('vorfaelle') && <section className="m-card"><h3><AlertTriangle size={16} />Incidents</h3>{!inc ? <div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div> : incShown.length === 0 ? <div className="small muted">{needle ? 'Nothing found.' : 'No incidents.'}</div> : incShown.slice(0, needle ? 30 : 8).map((x) => <div key={x.id || x.t} className="small"><b><Keep>{x.name || x.svc}</Keep></b> – <Keep>{x.title || x.error}</Keep> <span className="tiny muted">{fmtDate(x.t || x.at)}</span></div>)}</section>}
       {show('aenderungen') && audit && <section className="m-card"><h3><History size={16} />Latest changes</h3>{auditShown.length === 0 ? <div className="small muted">{needle ? 'Nothing found.' : 'None yet.'}</div> : auditShown.slice(0, needle ? 60 : 15).map((e) => <div key={e.id} className="small"><Keep><b>{e.target}</b> {e.action}</Keep> <span className="tiny muted">{fmtDate(e.t)} · <Keep>{e.via}</Keep></span></div>)}</section>}
       <a className="m-btn sm" href="#/system/protokolle"><ScrollText size={14} /> All logs</a>
     </>
@@ -279,7 +279,7 @@ function SharedWithMe() {
     } catch (e) { toast.error(e.message); }
     return undefined;
   };
-  if (!d) return <div className="small muted">Loading …</div>;
+  if (!d) return <div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div>;
   if (!d.items.length) return <div className="small muted">When someone shares an access with you, it appears here.</div>;
   return d.items.map((x) => (x.locked ? (
     <div key={x.key} className="m-row muted"><Lock size={14} /><span className="grow small">{t('An entry from “{vault}” – the vault is locked right now.', { vault: x.vaultName })}</span></div>
@@ -308,9 +308,9 @@ function PwTab() {
   const v = d && d.instances.find((i) => i.id === vid);
   useEffect(() => { if (!v || v.locked) { setItems(null); return undefined; } const tm = setTimeout(() => get(`/pw/${v.id}/items?q=${encodeURIComponent(q)}`).then((r) => setItems(Array.isArray(r) ? r : r.items || [])).catch(() => setItems([])), 200); return () => clearTimeout(tm); }, [v && v.id, v && v.locked, q]); // eslint-disable-line react-hooks/exhaustive-deps
   const full = (it) => get(`/pw/${v.id}/items/${it.id}`);
-  if (!me) return <section className="m-card"><div className="small muted">Loading …</div></section>;
+  if (!me) return <section className="m-card"><div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div></section>;
   if (me.member) return <section className="m-card"><h3><KeyRound size={16} />Shared with me</h3><SharedWithMe /></section>;
-  if (!d) return <section className="m-card"><div className="small muted">Loading …</div></section>;
+  if (!d) return <section className="m-card"><div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div></section>;
   if (!d.instances.length) return <section className="m-card"><h3><KeyRound size={16} />Passwords</h3><div className="small muted">No vault yet – create one in the full view under Passwords.</div></section>;
   return (
     <section className="m-card">
@@ -324,7 +324,7 @@ function PwTab() {
       ) : (
         <>
           <input className="input" style={{ marginTop: 8 }} placeholder="Search …" aria-label="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-          {!items ? <div className="small muted">Loading …</div> : items.length === 0 ? <div className="small muted">Nothing found.</div> : items.slice(0, 60).map((it) => (
+          {!items ? <div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div> : items.length === 0 ? <div className="small muted">Nothing found.</div> : items.slice(0, 60).map((it) => (
             <div key={it.id} className="m-row">
               <div className="grow" style={{ minWidth: 0 }}><b className="ellipsis"><Keep>{it.name}</Keep></b><div className="tiny muted ellipsis"><Keep>{it.username}{codes[it.id] ? ` · 2FA ${codes[it.id]}` : ''}</Keep></div></div>
               {it.username && <button className="m-btn sm" title="Copy user name" aria-label="Copy user name" onClick={() => copy(it.username, 'User name copied')}><Copy size={15} /></button>}

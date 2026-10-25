@@ -1,3 +1,7 @@
+## 1.1.0
+
+- Loading states show Hostwerk’s spinner next to the text (SDK 3.6) instead of text alone. / Ladezustände zeigen Hostwerks Kreisel neben dem Text (SDK 3.6) statt nur Text.
+
 ## 1.0.1
 
 - New animated icon and banner in the common Hostwerk style (isometric block). / Neues animiertes Symbol und Banner im gemeinsamen Hostwerk-Stil (isometrischer Block).
