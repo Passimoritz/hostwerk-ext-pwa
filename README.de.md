@@ -4,7 +4,7 @@
 
 Hostwerk aufs Handy – als Web-App für Android und iPhone, ohne App-Store. Handy per QR-Code koppeln, gekoppelte Geräte im Blick und einzeln sperren, neue Geräte erst nach Freigabe am PC. Für dich und für Mitglieder aus Team & Rollen, mit deren Rechten.
 
-[English](README.md) · Eine offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public) Erweiterung (SDK 3.4, native Erweiterung)
+[English](README.md) · Offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public)-Erweiterung (native Erweiterung, ab Hostwerk 3.0)
 
 ![Livebetrieb → Hostwerk-App](docs/screenshot.de.png)
 
