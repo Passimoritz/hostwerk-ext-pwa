@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Globe, Database, Box, Boxes, Mail, Play, Square, RotateCw, ListChecks, Bot, Send, AlertTriangle, LayoutDashboard, Users, Pause, Download, Share, Gamepad2, CalendarClock, ScrollText, KeyRound, ShieldCheck, Activity, HeartPulse, History, ChevronRight, Copy, Fingerprint, WifiOff, Smartphone, QrCode, Check, Trash2, Pencil, LogOut, Clock, Lock, Eye, EyeOff, ShieldAlert, RefreshCw } from 'lucide-react';
-import { useStore, get, post, put, del, useApi, mcCount, fmtDate, useRefresh, on } from '@hostwerk/api';
+import { useStore, get, post, put, del, useApi, playerCount, fmtDate, useRefresh, on } from '@hostwerk/api';
 import { Btn, Modal, Field, Seg, Switch, SettingRow, Callout, Empty, TileEmpty, Loading, Progress, InfoTip, toast, confirmDialog, promptDialog, useInterval } from '@hostwerk/ui';
-import { stopAllGuarded, confirmStopOne, runGate, setStopGate, askAi, EmergencyButton, EmergencyBanner, AiQuotaWidget, HwLogo, Keep } from '@hostwerk/kit';
+import { stopAllGuarded, confirmStopOne, runGate, setStopGate, askAi, EmergencyButton, EmergencyBanner, AiQuotaWidget, HwLogo, Keep, kindText, getLang } from '@hostwerk/kit';
 import { t } from '@hostwerk/i18n';
 import './style.css';
 
@@ -82,7 +82,13 @@ const STATE = { running: ['running', 'ok'], starting: ['starting', 'warn'], stop
 // Last known state for "offline": without a connection the app shows it with its time (display only, no buttons)
 const LAST_KEY = 'hw-m-last';
 const readLast = () => { try { return JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch { return null; } };
-const writeLast = (o) => { try { localStorage.setItem(LAST_KEY, JSON.stringify({ t: Date.now(), o: { web: o.web, db: o.db, mail: o.mail, minecraft: o.minecraft, apps: o.apps } })); } catch { /* full or blocked */ } };
+const writeLast = (o) => { try { localStorage.setItem(LAST_KEY, JSON.stringify({ t: Date.now(), o: { web: o.web, db: o.db, mail: o.mail, kinds: o.kinds, apps: o.apps } })); } catch { /* full or blocked */ } };
+
+const NONE = [];
+/** Dienste der Erweiterungs-Arten aus Hostwerks Überblick (overview.kinds, SDK 3.5) */
+const kindList = (o) => Object.values((o && o.kinds) || {});
+const kindItems = (o) => kindList(o).flatMap((k) => k.items || NONE);
+const mcServers = (o) => (o && o.kinds && o.kinds.mc && o.kinds.mc.items) || NONE;
 
 function Row({ icon: I, name, sub, state, base, color, href, svc, offline }) {
   const [busy, setBusy] = useState(false);
@@ -153,10 +159,10 @@ function DeviceCard() {
 
 function ServicesTab({ o, jobs, offline }) {
   const apps = o.apps || [];
-  const all = [...o.web, ...o.db, o.mail, ...o.minecraft, ...apps];
+  const all = [...o.web, ...o.db, o.mail, ...kindItems(o), ...apps];
   const running = all.filter((s) => s.proc.state === 'running').length;
   const errors = all.filter((s) => s.proc.state === 'error');
-  const players = o.minecraft.reduce((n, s) => n + mcCount(s), 0);
+  const players = kindItems(o).reduce((n, s) => n + playerCount(s), 0);
   const runningJobs = Object.values(jobs).filter((j) => j.state === 'running');
   const startAll = async () => { try { const r = await post('/start-all'); if (r.errors.length) toast.error(r.errors.join('\n')); else toast.success('Everything started'); } catch (e) { toast.error(e.message); } };
   return (
@@ -175,7 +181,7 @@ function ServicesTab({ o, jobs, offline }) {
       {runningJobs.length > 0 && <section className="m-card"><h3><ListChecks size={16} />Running in the background</h3>{runningJobs.map((j) => <div key={j.id} className="m-job"><div className="row-tight"><span className="grow small ellipsis"><Keep>{j.title}</Keep></span>{j.canPause && <button className="m-btn sm" title={j.paused ? 'Continue' : 'Pause'} aria-label={j.paused ? 'Continue' : 'Pause'} onClick={() => post(`/jobs/${j.id}/${j.paused ? 'resume' : 'pause'}`)}>{j.paused ? <Play size={14} /> : <Pause size={14} />}</button>}</div><Progress value={j.progress} indeterminate={!j.progress && !j.paused} /></div>)}</section>}
       {o.web.length > 0 && <section className="m-card"><h3><Globe size={16} />Web servers</h3>{o.web.map((w) => <Row key={w.id} icon={Globe} color={w.color} name={w.name} sub={t('Port {port}', { port: w.httpPort })} state={w.installed ? w.proc.state : 'missing'} base={`/web/${w.id}`} href={`/web/${w.id}`} svc={w} offline={offline} />)}</section>}
       {o.db.length > 0 && <section className="m-card"><h3><Database size={16} />Databases</h3>{o.db.map((d) => <Row key={d.id} icon={Database} color={d.color} name={d.name} sub={`${d.typeLabel} · ${t('Port {port}', { port: d.port })}`} state={d.installed ? d.proc.state : 'missing'} base={`/dbs/${d.id}`} href={`/dbs/${d.id}`} svc={d} offline={offline} />)}</section>}
-      {o.minecraft.length > 0 && <section className="m-card"><h3><Box size={16} />Minecraft</h3>{o.minecraft.map((s) => <Row key={s.id} icon={Box} color="#23964a" name={s.name} sub={s.proc.state === 'running' ? `${t('{n} players', { n: mcCount(s) })}${(s.proc.extra.players || []).length ? `: ${s.proc.extra.players.join(', ')}` : ''}` : `${s.typeLabel} ${s.version}`} state={s.proc.state} base={`/mc/servers/${s.id}`} href={`/mc/${s.id}`} svc={s} offline={offline} />)}</section>}
+      {kindList(o).filter((k) => (k.items || NONE).length).map((k) => <section key={k.kind} className="m-card"><h3><Box size={16} /><Keep>{kindText(k.label, getLang()) || k.kind}</Keep></h3>{k.items.map((s) => { const p = s.proc || {}; const n = playerCount(s); return <Row key={s.id} icon={Box} color={k.color} name={s.name} sub={p.state === 'running' && n ? t('{n} players', { n }) : s.detail || [s.typeLabel, s.version].filter(Boolean).join(' ')} state={p.state || 'stopped'} base={k.api ? `${k.api}/${s.id}` : null} href={k.route ? `${k.route}/${s.id}` : null} svc={s} offline={offline} />; })}</section>)}
       {apps.length > 0 && <section className="m-card"><h3><Boxes size={16} />Apps</h3>{apps.map((a) => <Row key={a.id} icon={Boxes} name={a.name} sub={a.kindLabel} state={a.proc.state} base={`/apps/${a.id}`} href={`/apps/${a.id}`} svc={a} offline={offline} />)}</section>}
       {o.mail && <section className="m-card"><h3><Mail size={16} />Mail catcher</h3><Row icon={Mail} name={t('Mail catcher')} sub={t('{count} mails · {unread} unread', { count: o.mail.count, unread: o.mail.unread })} state={o.mail.proc.state} base="/mail" href="/mail" svc={o.mail} offline={offline} /></section>}
     </>
@@ -186,7 +192,7 @@ function PlayersTab({ o }) {
   const [cmd, setCmd] = useState({});
   const [games, setGames] = useState(null);
   useEffect(() => { get('/games').then(setGames).catch(() => setGames({ servers: [] })); }, []);
-  const servers = o.minecraft;
+  const servers = mcServers(o);
   const sendCmd = async (s) => { const c = (cmd[s.id] || '').trim(); if (!c) return; try { await post(`/mc/servers/${s.id}/command`, { command: c }); toast.success('Sent'); setCmd({ ...cmd, [s.id]: '' }); } catch (e) { toast.error(e.message); } };
   if (!servers.length && !(games && games.servers.length)) return <section className="m-card"><div className="small muted">No game servers set up.</div></section>;
   return (
@@ -195,7 +201,7 @@ function PlayersTab({ o }) {
         const pl = s.proc.extra.players || [];
         return (
           <section key={s.id} className="m-card">
-            <h3><Box size={16} /><Keep>{s.name}</Keep> <span className="tiny muted">{s.proc.state === 'running' ? `${t('{n} online', { n: mcCount(s) })}${s.proc.extra.tps != null ? ` · TPS ${s.proc.extra.tps}` : ''}` : t('off')}</span></h3>
+            <h3><Box size={16} /><Keep>{s.name}</Keep> <span className="tiny muted">{s.proc.state === 'running' ? `${t('{n} online', { n: playerCount(s) })}${s.proc.extra.tps != null ? ` · TPS ${s.proc.extra.tps}` : ''}` : t('off')}</span></h3>
             {pl.length > 0 && <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>{pl.map((p) => <button type="button" key={p} className="chip" title={t('Kick {player} from the server', { player: p })} onClick={async () => { if ((await confirmDialog({ title: t('Kick {player} from the server?', { player: p }), text: 'The player is disconnected and can join again afterwards.', confirm: 'Kick', danger: true })) && (await runGate())) { await post(`/mc/servers/${s.id}/command`, { command: 'kick ' + p }).then(() => toast.success(t('{player} was kicked from the server', { player: p }))).catch((e) => toast.error(e.message)); } }}><Keep>{p}</Keep></button>)}</div>}
             {s.proc.state === 'running' && <form className="row" style={{ gap: 6, marginTop: 8 }} onSubmit={(e) => { e.preventDefault(); sendCmd(s); }}><input className="input grow" placeholder="Command (e.g. say Hello, whitelist add Name)" aria-label="Command" value={cmd[s.id] || ''} onChange={(e) => setCmd({ ...cmd, [s.id]: e.target.value })} /><button className="m-btn primary" type="submit" title="Send" aria-label="Send"><Send size={16} /></button></form>}
             <div className="row" style={{ gap: 6, marginTop: 8, flexWrap: 'wrap' }}><a className="m-btn sm" href={`#/mc/${s.id}/players`}>Manage players <ChevronRight size={14} /></a><a className="m-btn sm" href={`#/mc/${s.id}/console`}>Console</a><a className="m-btn sm" href={`#/mc/${s.id}/backups`}>Backups</a></div>
@@ -414,7 +420,7 @@ function PhoneApp() {
   const o = live || (last && last.o ? { ...last.o, apps: last.o.apps || [] } : null);
   const offline = !connected;
   if (!o) return <div className="m-page"><div className="m-card muted">{connected ? 'Connecting …' : 'No connection – and no remembered state yet.'}</div></div>;
-  const all = [...o.web, ...o.db, o.mail, ...o.minecraft, ...(o.apps || [])].filter(Boolean);
+  const all = [...o.web, ...o.db, o.mail, ...kindItems(o), ...(o.apps || [])].filter(Boolean);
   const running = all.filter((s) => s.proc.state === 'running').length;
   const TABS = [['dienste', LayoutDashboard, 'Services'], ['spieler', Users, 'Players'], ['aufgaben', CalendarClock, 'Tasks'], ['passwoerter', KeyRound, 'Passwords'], ['protokoll', ScrollText, 'Log'], ['mehr', Bot, 'More']];
   return (
