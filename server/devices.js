@@ -215,7 +215,7 @@ class Devices {
     this.note(pending ? 'waiting' : 'remembered', { device: device.name, user: session.user, ip: device.lastIp });
     if (!pending) this.audit(`Gerät „${device.name}“ für ${session.user} gemerkt`, device.name);
     const en = this.en();
-    if (pending) this.alert(en ? 'Hostwerk app: device waits for approval' : 'Hostwerk-App: Gerät wartet auf Freigabe', en ? `„${device.name}“ (${session.user}, ${device.lastIp}) – approve or block it under Go live → Hostwerk app.` : `„${device.name}“ (${session.user}, ${device.lastIp}) – unter Livebetrieb → Hostwerk-App freigeben oder sperren.`);
+    if (pending) this.alert(en ? 'Hostwerk app: device waits for approval' : 'Hostwerk-App: Gerät wartet auf Freigabe', en ? `„${device.name}“ (${session.user}, ${device.lastIp}) – approve or block it under Go live → Access → Hostwerk app.` : `„${device.name}“ (${session.user}, ${device.lastIp}) – unter Livebetrieb → Zugriff → Hostwerk-App freigeben oder sperren.`);
     this.host.broadcast({ type: 'pwa-devices' });
     return { cookie: this.cookie(device.id, secret), device: this.pub(device) };
   }

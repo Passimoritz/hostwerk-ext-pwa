@@ -55,7 +55,7 @@ function installPage(req, res, { t, lang }) {
     : kind === 'ios'
       ? `<h1>${esc(t('Hostwerk on the iPhone'))}</h1><p>${esc(t('Hostwerk runs as a web app – with its own icon, without the browser bar.'))}</p>${open}
 <ol><li>${esc(t('Tap Share at the bottom (square with an arrow).'))}</li><li>${esc(t('Choose “Add to Home Screen”.'))}</li><li>${esc(t('Open Hostwerk from there and keep the phone signed in under “More”.'))}</li></ol>`
-      : `<h1>${esc(t('Hostwerk for your phone'))}</h1><p>${esc(t('Open this page on your phone (pairing code in Hostwerk → Go live → Hostwerk app). Hostwerk runs there as a web app – the same on Android and iPhone.'))}</p>${open}`;
+      : `<h1>${esc(t('Hostwerk for your phone'))}</h1><p>${esc(t('Open this page on your phone (pairing code in Hostwerk → Go live → Access → Hostwerk app). Hostwerk runs there as a web app – the same on Android and iPhone.'))}</p>${open}`;
   const detected = kind === 'android' ? 'Android' : kind === 'ios' ? 'iPhone/iPad' : t('Computer');
   const nonce = secure(res);
   res.type('html').send(page({ title: t('Hostwerk for your phone'), lang, nonce, body: `${body}<p class="note">${esc(t('Detected: {kind}', { kind: detected }))}</p>` }));

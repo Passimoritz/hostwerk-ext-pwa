@@ -1,3 +1,7 @@
+## 1.2.0
+
+- Go live in five areas (Hostwerk with SDK 3.11): the Hostwerk app is a section in Go live → Access (#/live/zugriff/app); older Hostwerk versions keep the tab. “Pair phone …” stays in the remote access card. Links and hints point to the new places (Access → Remote access, Monitoring → Alerts). / Livebetrieb in fünf Bereichen (Hostwerk mit SDK 3.11): Die Hostwerk-App ist ein Abschnitt unter Livebetrieb → Zugriff (#/live/zugriff/app); ältere Hostwerk-Versionen behalten den Reiter. „Handy koppeln …“ bleibt in der Fernzugriffs-Karte. Links und Hinweise zeigen auf die neuen Orte (Zugriff → Fernzugriff, Überwachung → Meldungen).
+
 ## 1.1.0
 
 - Loading states show Hostwerk’s spinner next to the text (SDK 3.6) instead of text alone. / Ladezustände zeigen Hostwerks Kreisel neben dem Text (SDK 3.6) statt nur Text.

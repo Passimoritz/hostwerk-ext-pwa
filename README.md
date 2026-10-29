@@ -6,13 +6,13 @@ Hostwerk on your phone – as a web app for Android and iPhone, without an app s
 
 [Deutsch](README.de.md) · An official [Hostwerk](https://github.com/Passimoritz/hostwerk-public) extension (native extension, Hostwerk 3.0 or newer)
 
-![Go live → Hostwerk app](docs/screenshot.png)
+![Go live → Access → Hostwerk app](docs/screenshot.png)
 
 <p align="center"><img src="docs/phone.png" alt="Hostwerk on the phone" width="300"></p>
 
 ## What it does
 
-- **Where:** Go live → Operations → Hostwerk app, and “Pair phone …” in the remote access card – no own sidebar entry
+- **Where:** Go live → Access → Hostwerk app (older Hostwerk: Operations → Hostwerk app), and “Pair phone …” in the remote access card – no own sidebar entry
 - **The phone screen** (`#/handy`): big tap targets in six tabs – services, players, tasks, passwords, log, more. Small screens start there by themselves. Offline it shows the last known state (read only).
 - **Installable like an app:** manifest, home-screen icon and service worker – “Install now” on Android, “Add to Home Screen” on the iPhone. No app store, no developer account, no signing.
 - **Pair with a QR code:** a one-time code for your account or for a member – valid once and only for 5 minutes. The phone gets its own device key and stays signed in like an app.

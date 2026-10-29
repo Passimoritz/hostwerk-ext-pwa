@@ -55,7 +55,7 @@ const lan = Object.values(os.networkInterfaces()).flat().find((a) => a && a.fami
       const p = await browser.newPage();
       await p.setViewport({ width: 1440, height: 1000 });
       await p.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
-      await p.goto(`${srv.origin}/?token=${srv.token}#/live/app`, { waitUntil: 'networkidle2' });
+      await p.goto(`${srv.origin}/?token=${srv.token}#/live/zugriff/app`, { waitUntil: 'networkidle2' });
       await sleep(2500);
       await p.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /Create pairing code|Kopplungs-Code erstellen/.test(x.textContent)); if (b) b.click(); });
       await sleep(1500);

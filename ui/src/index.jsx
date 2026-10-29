@@ -12,7 +12,7 @@ import './style.css';
  *                    small screens start here (mobileHome). Offline it shows the last known state (read only).
  *   installable      manifest, home-screen icon and service worker come from this extension (public part of the server,
  *                    /api/x/pwa/pub/…) – Hostwerk's core no longer ships them.
- *   paired devices   Go live → Hostwerk app (tab) and "Pair phone …" in the remote access card: one-time QR code,
+ *   paired devices   Go live → Access → Hostwerk app (section; older Hostwerk: tab) and "Pair phone …" in the remote access card: one-time QR code,
  *                    device list, approval, blocking, security log. The phone keeps itself signed in under "More".
  *   passkey          dangerous actions (stop everything, stop a service, kick a player) can additionally ask for the
  *                    phone's passkey (fingerprint, face, PIN) – Hostwerk's stop guard calls it (setStopGate).
@@ -145,7 +145,7 @@ function DeviceCard() {
     <section className="m-card">
       <h3><Smartphone size={16} />This phone</h3>
       {d && d.status === 'active' && <div className="small"><span className="m-state ok">signed in</span> {t('Stays signed in as {user} – unused for a long time it expires on its own.', { user: d.user || '?' })}</div>}
-      {d && d.status === 'pending' && <div className="small"><span className="m-state warn">waits</span> Waiting for approval on the PC (Go live → Hostwerk app). Until then the normal sign-in applies.</div>}
+      {d && d.status === 'pending' && <div className="small"><span className="m-state warn">waits</span> Waiting for approval on the PC (Go live → Access → Hostwerk app). Until then the normal sign-in applies.</div>}
       {!d && (
         <>
           <div className="small muted">Without this, the sign-in ends after 12 hours. With it, this phone stays signed in like an app – you can block it on the PC at any time.</div>
@@ -372,7 +372,7 @@ function BioCard() {
         <span className="small grow">Also confirm “stop everything”, stopping services and kicking players with the passkey.</span>
         <Switch checked={onOff} disabled={!avail && !onOff} label="Confirm with passkey" onChange={(v) => { setBio(v); setOnOff(v); }} />
       </div>
-      {avail === false && !onOff && <div className="tiny muted" style={{ marginTop: 6 }}>There is no passkey for this address yet – set one up in the full view under Go live → Remote access.</div>}
+      {avail === false && !onOff && <div className="tiny muted" style={{ marginTop: 6 }}>There is no passkey for this address yet – set one up in the full view under Go live → Access → Remote access.</div>}
     </section>
   );
 }
@@ -395,7 +395,7 @@ function MoreTab({ q, setQ }) {
       </section>
       <section className="m-card"><h3><LayoutDashboard size={16} />More areas</h3>
         <div className="m-grid">
-          {[['/passwoerter', KeyRound, 'Passwords'], ['/live/sicherheit', ShieldCheck, 'Security'], ['/system/ressourcen', Activity, 'Resources'], ['/mail', Mail, 'Email'], ['/ki', Bot, 'AI chat'], ['/', LayoutDashboard, 'Full view']].map(([h, I, l]) => <a key={h} className="m-tile" href={`#${h}`}><I size={20} /><span>{l}</span></a>)}
+          {[['/passwoerter', KeyRound, 'Passwords'], ['/live/schutz', ShieldCheck, 'Security'], ['/system/ressourcen', Activity, 'Resources'], ['/mail', Mail, 'Email'], ['/ki', Bot, 'AI chat'], ['/', LayoutDashboard, 'Full view']].map(([h, I, l]) => <a key={h} className="m-tile" href={`#${h}`}><I size={20} /><span>{l}</span></a>)}
         </div>
       </section>
       <div className="tiny muted" style={{ textAlign: 'center', padding: '8px 0 24px' }}><Users size={11} /> The full interface adapts to the phone – the sidebar becomes a toolbar.</div>
@@ -451,7 +451,7 @@ function NeedRemote({ link }) {
       <div className="small">The phone loads the app and the interface straight from your Hostwerk – for that, remote access has to run (password and two-factor sign-in).</div>
       <div className="row-tight" style={{ marginTop: 8 }}>
         {ready ? <Btn className="primary sm" onClick={async () => { try { await put('/live/remote', { enabled: true }); toast.success('Remote access switched on'); window.dispatchEvent(new Event('hw:pwa-reload')); } catch (e) { toast.error(e.message); } }}>Switch on remote access now</Btn>
-          : <a className="btn primary sm" href="#/live/fernzugriff">{link.hasPassword ? 'Set up two-factor sign-in' : 'Set up password and two-factor sign-in'}</a>}
+          : <a className="btn primary sm" href="#/live/zugriff/fernzugriff">{link.hasPassword ? 'Set up two-factor sign-in' : 'Set up password and two-factor sign-in'}</a>}
       </div>
     </Callout>
   );
@@ -515,7 +515,7 @@ function DeviceRow({ d, reload }) {
   );
 }
 
-/** Go live → Hostwerk app (tab) and the extension's own page */
+/** Go live → Access → Hostwerk app (section; older Hostwerk: tab) and the extension's own page */
 function AppTab() {
   const v = useApi('/pwa', [], { live: false, poll: true });
   useEffect(() => on('pwa-devices', () => v.reload()), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -542,11 +542,11 @@ function AppTab() {
           <div className="card-head"><ShieldCheck size={16} /><h3>Security</h3></div>
           <div className="card-body stack" style={{ gap: 10 }}>
             <SettingRow title="Approve your own new devices on the PC" text="A phone you keep signed in after a normal sign-in waits until you approve it here – a stolen password alone is then not enough. Phones of members always wait for your approval (they have no two-factor code)."><Switch checked={d.settings.approveNew} onChange={(x) => save({ approveNew: x })} /></SettingRow>
-            <SettingRow title="Report new devices" text="New devices and devices waiting for approval go to your alerts (Go live → Monitoring → alert channels)."><Switch checked={d.settings.alertNew} onChange={(x) => save({ alertNew: x })} /></SettingRow>
+            <SettingRow title="Report new devices" text="New devices and devices waiting for approval go to your alerts (Go live → Monitoring → Alerts)."><Switch checked={d.settings.alertNew} onChange={(x) => save({ alertNew: x })} /></SettingRow>
             <SettingRow title="Expire unused devices" text="A device that is not used for this long is forgotten on its own.">
               <select className="select" style={{ width: 'auto' }} aria-label="Expire unused devices" value={d.settings.idleDays} onChange={(e) => save({ idleDays: Number(e.target.value) })}>{[7, 14, 30, 60, 90, 180].map((n) => <option key={n} value={n}>{t('{n} days', { n })}</option>)}</select>
             </SettingRow>
-            <div className="tiny muted">Sign-in itself stays Hostwerk's: password and two-factor code, passkeys, lockout per address and per account (Go live → Remote access). Rights of members come from Team &amp; roles.</div>
+            <div className="tiny muted">Sign-in itself stays Hostwerk's: password and two-factor code, passkeys, lockout per address and per account (Go live → Access → Remote access). Rights of members come from Team &amp; roles.</div>
           </div>
         </div>
         <div className="card span-2">
@@ -571,7 +571,7 @@ function PairButton() {
   return (
     <>
       <Btn className="sm" icon={Smartphone} onClick={() => setOpen(true)}>Pair phone …</Btn>
-      {open && <Modal title="Pair a phone" subtitle="Hostwerk on the phone as an app – devices and security under Go live → Hostwerk app." size="wide" onClose={() => setOpen(false)} footer={<><a className="btn ghost" href="#/live/app" onClick={() => setOpen(false)}>Devices &amp; security</a><Btn onClick={() => setOpen(false)}>Close</Btn></>}>
+      {open && <Modal title="Pair a phone" subtitle="Hostwerk on the phone as an app – devices and security under Go live → Access → Hostwerk app." size="wide" onClose={() => setOpen(false)} footer={<><a className="btn ghost" href="#/live/zugriff/app" onClick={() => setOpen(false)}>Devices &amp; security</a><Btn onClick={() => setOpen(false)}>Close</Btn></>}>
         {v.data ? <PairPanel accounts={v.data.accounts} /> : <Loading />}
       </Modal>}
     </>
@@ -581,8 +581,14 @@ function PairButton() {
 export default {
   pages: { main: AppTab },
   screens: { handy: { Component: PhoneApp, mobileHome: true } },
+  // Hostwerk with SDK 3.11: a section in Go live → Access (#/live/zugriff/app)
+  sections: {
+    'live.zugriff': [{ id: 'app', title: 'Hostwerk app', icon: Smartphone, Component: AppTab, order: 75 }],
+  },
   slots: {
-    'live.tabs': [{ id: 'app', title: 'Hostwerk app', icon: Smartphone, Component: AppTab, order: 75 }],
+    // Older Hostwerk (before SDK 3.11): the tab in Go live. fallback: true – Hostwerk 3.11 and newer leave it out (the section
+    // above is there), older versions ignore the flag and show the tab as before.
+    'live.tabs': [{ id: 'app', title: 'Hostwerk app', icon: Smartphone, Component: AppTab, order: 75, fallback: true }],
     'live.remote.actions': [{ id: 'pair', title: 'Pair phone', Component: PairButton }],
   },
 };

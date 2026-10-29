@@ -6,13 +6,13 @@ Hostwerk aufs Handy – als Web-App für Android und iPhone, ohne App-Store. Han
 
 [English](README.md) · Offizielle [Hostwerk](https://github.com/Passimoritz/hostwerk-public)-Erweiterung (native Erweiterung, ab Hostwerk 3.0)
 
-![Livebetrieb → Hostwerk-App](docs/screenshot.de.png)
+![Livebetrieb → Zugriff → Hostwerk-App](docs/screenshot.de.png)
 
 <p align="center"><img src="docs/phone.de.png" alt="Hostwerk auf dem Handy" width="300"></p>
 
 ## Was sie kann
 
-- **Wo:** Livebetrieb → Betrieb → Hostwerk-App und „Handy koppeln …“ in der Fernzugriffs-Karte – kein eigener Eintrag in der Seitenleiste
+- **Wo:** Livebetrieb → Zugriff → Hostwerk-App (ältere Hostwerk: Betrieb → Hostwerk-App) und „Handy koppeln …“ in der Fernzugriffs-Karte – kein eigener Eintrag in der Seitenleiste
 - **Die Handy-Ansicht** (`#/handy`): große Tipp-Flächen in sechs Reitern – Dienste, Spieler, Aufgaben, Passwörter, Protokoll, Mehr. Schmale Bildschirme starten von selbst dort. Offline zeigt sie den letzten Stand (nur Anzeige).
 - **Installierbar wie eine App:** Manifest, Startbildschirm-Symbol und Service Worker – „Jetzt installieren“ auf Android, „Zum Home-Bildschirm“ auf dem iPhone. Kein App-Store, kein Entwicklerkonto, keine Signatur.
 - **Koppeln per QR-Code:** ein Einmal-Code für dein Konto oder für ein Mitglied – einmal gültig und nur 5 Minuten. Das Handy bekommt einen eigenen Geräte-Schlüssel und bleibt angemeldet wie eine App.
