@@ -1,3 +1,7 @@
+## 1.2.1
+
+- Links point to the new places in System (Hostwerk with SDK 3.12): health check → Upkeep → Health check (#/system/wartung/gesundheit), resources → Performance (#/system/leistung); the old addresses redirect. / Links zeigen auf die neuen Orte im System (Hostwerk mit SDK 3.12): Gesundheits-Check → Wartung → Gesundheits-Check (#/system/wartung/gesundheit), Ressourcen → Leistung (#/system/leistung); die alten Adressen leiten weiter.
+
 ## 1.2.0
 
 - Go live in five areas (Hostwerk with SDK 3.11): the Hostwerk app is a section in Go live → Access (#/live/zugriff/app); older Hostwerk versions keep the tab. “Pair phone …” stays in the remote access card. Links and hints point to the new places (Access → Remote access, Monitoring → Alerts). / Livebetrieb in fünf Bereichen (Hostwerk mit SDK 3.11): Die Hostwerk-App ist ein Abschnitt unter Livebetrieb → Zugriff (#/live/zugriff/app); ältere Hostwerk-Versionen behalten den Reiter. „Handy koppeln …“ bleibt in der Fernzugriffs-Karte. Links und Hinweise zeigen auf die neuen Orte (Zugriff → Fernzugriff, Überwachung → Meldungen).
