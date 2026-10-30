@@ -2,7 +2,7 @@
 /*
  * README pictures of the Hostwerk app: a throwaway Hostwerk (temporary folder, never the real ~/Hostwerk) with this
  * extension, remote access switched on (password + two-factor code), two paired phones and a fresh pairing code.
- *   docs/screenshot.png / .de.png   Go live → Hostwerk app (PC)
+ *   docs/screenshot.png / .de.png   Go live → Access → Hostwerk app (PC)
  *   docs/phone.png / .de.png        the phone screen #/handy (390 × 844)
  * The address of this PC's network is replaced before every picture.
  *   node tools/shots.js            (needs ../hostwerk with a built ui/dist and puppeteer-core + Chrome/Edge)

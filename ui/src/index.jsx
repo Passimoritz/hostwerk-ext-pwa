@@ -348,7 +348,7 @@ function StatusCard() {
   const link = sp && sp.on && sp.links ? (sp.links.public[0] || sp.links.local) : null;
   return (
     <section className="m-card"><h3><Activity size={16} />Reachability</h3>
-      {!up ? <div className="muted small">…</div> : !checks.length ? <div className="muted small">No checks yet (Go live → Monitoring).</div> : (
+      {!up ? <div className="muted small">…</div> : !checks.length ? <div className="muted small">No checks yet (Go live → Monitoring → Watchers).</div> : (
         <div className={`small ${down.length ? 'c-err' : 'c-ok'}`}>{down.length ? t('{n} unreachable: {names}', { n: down.length, names: down.map((c) => c.name).join(', ') }) : t('All {n} reachable', { n: checks.length })}</div>
       )}
       {sp && <div className="row" style={{ marginTop: 8, gap: 8, flexWrap: 'wrap' }}>
@@ -542,7 +542,7 @@ function AppTab() {
           <div className="card-head"><ShieldCheck size={16} /><h3>Security</h3></div>
           <div className="card-body stack" style={{ gap: 10 }}>
             <SettingRow title="Approve your own new devices on the PC" text="A phone you keep signed in after a normal sign-in waits until you approve it here – a stolen password alone is then not enough. Phones of members always wait for your approval (they have no two-factor code)."><Switch checked={d.settings.approveNew} onChange={(x) => save({ approveNew: x })} /></SettingRow>
-            <SettingRow title="Report new devices" text="New devices and devices waiting for approval go to your alerts (Go live → Monitoring → Alerts)."><Switch checked={d.settings.alertNew} onChange={(x) => save({ alertNew: x })} /></SettingRow>
+            <SettingRow title="Report new devices" text="New devices and devices waiting for approval go to your alerts (Go live → Monitoring → Messages)."><Switch checked={d.settings.alertNew} onChange={(x) => save({ alertNew: x })} /></SettingRow>
             <SettingRow title="Expire unused devices" text="A device that is not used for this long is forgotten on its own.">
               <select className="select" style={{ width: 'auto' }} aria-label="Expire unused devices" value={d.settings.idleDays} onChange={(e) => save({ idleDays: Number(e.target.value) })}>{[7, 14, 30, 60, 90, 180].map((n) => <option key={n} value={n}>{t('{n} days', { n })}</option>)}</select>
             </SettingRow>
