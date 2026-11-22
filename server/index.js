@@ -6,7 +6,9 @@
  *
  * Signed in on the PC (admin only – Team & roles keeps members away from these routes):
  *   GET    /api/pwa                     devices, settings, security log, accounts that can be paired
- *   POST   /api/pwa/pair                { userId?, name? } → one-time code, link and QR code (5 minutes, used once)
+ *   POST   /api/pwa/pair                { userId?, name?, replaces? } → one-time code, link and QR code (5 minutes, used once;
+ *                                         replaces = the previous code of the same window, it stops at once)
+ *   POST   /api/pwa/pair/cancel         { code } → the window was closed: the code stops at once
  *   POST   /api/pwa/devices/:id/approve | PUT /api/pwa/devices/:id { name } | DELETE /api/pwa/devices/:id
  *   DELETE /api/pwa/devices             block every device
  *   PUT    /api/pwa/settings            { approveNew, idleDays, alertNew }
@@ -47,7 +49,7 @@ function activate(host) {
   r.get('/pwa/link', async (req, res) => {
     const st = ctx.remote && ctx.remote.status ? ctx.remote.status() : {};
     const bases = phoneBases(ctx);
-    const i = Math.min(Number(req.query.i) || 0, Math.max(0, bases.length - 1));
+    const i = Math.max(0, Math.min(Math.trunc(Number(req.query.i)) || 0, bases.length - 1));
     const link = bases[i] ? `${bases[i]}${pages.BASE}` : null;
     res.json({ bases, link, svg: link ? await qr(link) : null, running: !!st.running, ready: !!(st.running && st.hasPassword && st.totpOn), hasPassword: !!st.hasPassword, totpOn: !!st.totpOn, domain: st.domain || '', port: st.port });
   });
@@ -58,11 +60,12 @@ function activate(host) {
     if (!b.userId && s && s.userId) throw host.error(403, 'Only the owner can pair a phone for the owner account.');
     const bases = phoneBases(ctx);
     if (!bases.length) throw host.error(409, 'Switch on remote access first – the phone loads Hostwerk from there.');
-    const c = devices.createCode({ userId: typeof b.userId === 'string' ? b.userId : '', name: b.name });
-    const i = Math.min(Number(b.i) || 0, bases.length - 1);
+    const c = devices.createCode({ userId: typeof b.userId === 'string' ? b.userId : '', name: b.name, replaces: b.replaces });
+    const i = Math.max(0, Math.min(Math.trunc(Number(b.i)) || 0, bases.length - 1));
     const url = `${bases[i]}${pages.BASE}pair#${c.code}`;
     res.json({ ...c, url, bases, svg: await qr(url) });
   });
+  r.post('/pwa/pair/cancel', json, (req, res) => res.json({ ok: devices.cancelCode((req.body || {}).code) }));
   r.post('/pwa/devices/:id/approve', (req, res) => res.json(devices.approve(req.params.id)));
   r.put('/pwa/devices/:id', json, (req, res) => res.json(devices.rename(req.params.id, (req.body || {}).name)));
   r.delete('/pwa/devices/:id', (req, res) => { devices.remove(req.params.id, 'blocked'); res.json(devices.view()); });

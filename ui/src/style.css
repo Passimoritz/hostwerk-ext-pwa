@@ -16,7 +16,8 @@
 .m-card.err { border-color: color-mix(in srgb, var(--err) 50%, var(--line-2)); }
 .m-card h3 { margin: 0; font-size: var(--fs-md); display: flex; align-items: center; gap: 8px; }
 .m-row { display: flex; align-items: center; gap: 10px; min-height: 52px; }
-.m-ico { width: 36px; height: 36px; border-radius: var(--r-lg); display: grid; place-items: center; background: var(--surface-2); color: #fff; flex: none; }
+.m-ico { width: 36px; height: 36px; border-radius: var(--r-lg); display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex: none; }
+.m-ico.tinted { color: #fff; }
 .m-state { font-size: var(--fs-xs); padding: 2px 8px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--text-2); }
 .m-state.ok { color: var(--ok-text); background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .m-state.err { color: var(--err-text); background: color-mix(in srgb, var(--err) 14%, transparent); }
@@ -45,6 +46,11 @@
 .pwa-qr { flex: none; }
 .pwa-qr-empty { width: 240px; height: 240px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; text-align: center; border: 1px dashed var(--line-2); border-radius: var(--r-xl); color: var(--text-2); }
 .pwa-device { gap: 10px; }
+/* Name plus up to two badges: in the narrow column the badges move below the name instead of cutting it to a few letters */
+.pwa-device .row-tight { flex-wrap: wrap; row-gap: 4px; }
+.pwa-device .row-tight > b { max-width: 100%; }
 .pwa-device.pending { background: color-mix(in srgb, var(--warn) 7%, transparent); }
 .pwa-log { gap: 10px; }
 .pwa-log .badge { flex: none; }
+.pwa-qr-acc { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 240px; margin-bottom: var(--sp-2, 8px); }
+.pwa-qr-acc b { font-size: var(--fs-xl, 1.25rem); max-width: 100%; }

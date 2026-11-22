@@ -257,5 +257,10 @@
   "A phone you keep signed in after a normal sign-in waits until you approve it here – a stolen password alone is then not enough. Phones of members always wait for your approval (they have no two-factor code).": "Ein Handy, das du nach einer normalen Anmeldung angemeldet lässt, wartet, bis du es hier freigibst – ein gestohlenes Passwort allein reicht dann nicht. Handys von Mitgliedern warten immer auf deine Freigabe (sie haben keinen Zwei-Faktor-Code).",
   "This account already has devices waiting for approval – approve or block them on the PC first.": "Für dieses Konto warten schon Geräte auf Freigabe – gib sie zuerst am PC frei oder sperre sie.",
   "Only the owner can pair a phone for the owner account.": "Nur der Besitzer kann ein Handy für das Besitzer-Konto koppeln.",
-  "$patterns": []
+  "$patterns": [],
+  "password changed": "Passwort geändert",
+  "The password of this account has changed since – this device no longer gets in. Block it and pair it again.": "Das Passwort dieses Kontos wurde inzwischen geändert – dieses Gerät kommt nicht mehr hinein. Sperre es und kopple es neu.",
+  "The password of this account has changed since – block the device and pair it again.": "Das Passwort dieses Kontos wurde inzwischen geändert – sperre das Gerät und kopple es neu.",
+  "Passwords are not installed – add the Passwords extension in the full view under Extensions.": "Passwörter sind nicht installiert – füge die Erweiterung Passwörter in der vollen Ansicht unter Erweiterungen hinzu.",
+  "For the account": "Für das Konto"
 }

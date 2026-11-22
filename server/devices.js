@@ -127,7 +127,7 @@ class Devices {
     const d = this.list.find((x) => x.id === c.id);
     if (!d || d.status !== 'active' || !same(sha(c.secret), d.hash)) return null;
     // Password changed since pairing → this device is no longer valid
-    if (d.pw && !same(d.pw, this.pwStamp(d.userId))) return null;
+    if (this.stale(d)) return null;
     const now = this.now();
     if (now - (d.lastSeen || d.createdAt) > this.settings.idleDays * 86400000) {
       this.remove(d.id, 'expired');
@@ -161,18 +161,22 @@ class Devices {
     this.persist();
     return { device: d, secret };
   }
-  /** PC: one-time pairing code for an account ('' = owner). */
-  createCode({ userId = '', name = '' } = {}, by = 'admin') {
+  /** PC: one-time pairing code for an account ('' = owner). replaces: the previous code of this window ("New code") – it stops at once. */
+  createCode({ userId = '', name = '', replaces } = {}, by = 'admin') {
     const acc = this.account(userId || undefined);
     if (!acc) throw this.host.error(404, 'This account cannot sign in (removed, switched off or expired).');
     const now = this.now();
     for (const [k, v] of this.codes) if (v.until <= now) this.codes.delete(k);
-    if (this.codes.size >= MAX_CODES) throw this.host.error(429, 'Too many open pairing codes – wait a few minutes.');
+    if (typeof replaces === 'string' && /^[A-Za-z0-9_-]{22}$/.test(replaces)) this.codes.delete(sha(replaces));
+    // At most MAX_CODES open at once: the oldest one stops (e.g. of a browser tab closed hard, which could not cancel its code)
+    while (this.codes.size >= MAX_CODES) { let old = null; for (const [k, v] of this.codes) if (!old || v.until < this.codes.get(old).until) old = k; this.codes.delete(old); }
     const code = crypto.randomBytes(16).toString('base64url');
     this.codes.set(sha(code), { userId: userId || undefined, name: clean(name), until: now + CODE_MS, by });
     this.note('code-created', { user: acc.user });
     return { code, until: now + CODE_MS, user: acc.user };
   }
+  /** PC: the window with the code was closed – the code stops at once (does not wait 5 minutes, frees the limit) */
+  cancelCode(code) { return typeof code === 'string' && /^[A-Za-z0-9_-]{22}$/.test(code) ? this.codes.delete(sha(code)) : false; }
   /**
    * Phone: exchange a pairing code for a device key. The code is gone after the first try.
    * Wrong/old codes count as failed sign-ins of the address (core lockout, remote.fail).
@@ -208,6 +212,10 @@ class Devices {
   remember(req, session, { name } = {}) {
     if (!session || !session.user) throw this.host.error(401, 'Please sign in first.');
     if (session.device) { const d = this.list.find((x) => x.id === session.device); if (d) return { device: this.pub(d) }; }
+    // This phone already has a key of the same account (e.g. still waiting for approval) → keep it, no second device
+    const c = this.fromCookie(req);
+    const own = c ? this.list.find((x) => x.id === c.id && same(sha(c.secret), x.hash)) : null;
+    if (own && (own.userId || '') === (session.userId || '') && !this.stale(own)) return { device: this.pub(own) };
     if (this.list.filter((x) => x.status === 'pending' && (x.userId || '') === (session.userId || '')).length >= MAX_PENDING) throw this.host.error(429, 'This account already has devices waiting for approval – approve or block them on the PC first.');
     // Members have no second factor of their own: their devices always wait for the owner
     const pending = !!session.userId || this.settings.approveNew;
@@ -231,6 +239,7 @@ class Devices {
     if (d.status !== 'pending') return this.pub(d);
     const acc = this.account(d.userId);
     if (!acc) throw this.host.error(409, 'This account can no longer sign in – block the device instead.');
+    if (this.stale(d)) throw this.host.error(409, 'The password of this account has changed since – block the device and pair it again.');
     d.status = 'active'; d.approvedAt = this.now(); d.lastSeen = this.now();
     this.persist();
     this.note('approved', { device: d.name, user: acc.user });
@@ -263,10 +272,12 @@ class Devices {
   removeAll() { let n = 0; for (const d of [...this.list]) if (this.remove(d.id, 'all')) n++; return n; }
 
   /* ---------------- views ---------------- */
+  /** Password of the account changed since pairing → the key no longer works (verify), the device only waits to be blocked */
+  stale(d) { return !!(d.pw && !same(d.pw, this.pwStamp(d.userId))); }
   pub(d) {
     const acc = this.account(d.userId);
     const idleMs = this.settings.idleDays * 86400000;
-    return { id: d.id, name: d.name, ua: d.ua, user: acc ? acc.user : null, owner: !d.userId, orphan: !acc, via: d.via, status: d.status, createdAt: d.createdAt, lastSeen: d.lastSeen, lastIp: d.lastIp, approvedAt: d.approvedAt || null, expiresAt: (d.lastSeen || d.createdAt) + idleMs };
+    return { id: d.id, name: d.name, ua: d.ua, user: acc ? acc.user : null, owner: !d.userId, orphan: !acc, stale: this.stale(d), via: d.via, status: d.status, createdAt: d.createdAt, lastSeen: d.lastSeen, lastIp: d.lastIp, approvedAt: d.approvedAt || null, expiresAt: (d.lastSeen || d.createdAt) + idleMs };
   }
   view() {
     return {

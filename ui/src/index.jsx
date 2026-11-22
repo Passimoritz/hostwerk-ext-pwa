@@ -102,7 +102,7 @@ function Row({ icon: I, name, sub, state, base, color, href, svc, offline }) {
   };
   return (
     <div className={`m-row ${state}`}>
-      <span className="m-ico" style={color ? { background: color } : undefined}><I size={18} /></span>
+      <span className={`m-ico${color ? ' tinted' : ''}`} style={color ? { background: color } : undefined}><I size={18} /></span>
       <div className="grow" style={{ minWidth: 0 }} onClick={() => { if (href) location.hash = href; }}><b className="ellipsis"><Keep>{name}</Keep></b><div className="tiny muted ellipsis"><Keep>{sub}</Keep></div></div>
       <span className={`m-state ${kind}`}>{label}</span>
       {state !== 'missing' && !offline && (running
@@ -303,7 +303,7 @@ function PwTab() {
   const [q, setQ] = useState('');
   const [master, setMaster] = useState('');
   const [codes, setCodes] = useState({});
-  const load = () => get('/pw').then((r) => { setD(r); const v = r.instances.find((i) => i.id === r.defaultId) || r.instances[0]; setVid((cur) => cur || (v && v.id)); }).catch(() => setD({ instances: [] }));
+  const load = () => get('/pw').then((r) => { setD(r); const v = r.instances.find((i) => i.id === r.defaultId) || r.instances[0]; setVid((cur) => cur || (v && v.id)); }).catch((e) => setD({ instances: [], missing: !!e && e.status === 404 }));
   useEffect(() => { get('/pw/shared/mine').then((r) => { setMe(r); if (!r.member) load(); }).catch(() => { setMe({ member: false }); load(); }); }, []);
   const v = d && d.instances.find((i) => i.id === vid);
   useEffect(() => { if (!v || v.locked) { setItems(null); return undefined; } const tm = setTimeout(() => get(`/pw/${v.id}/items?q=${encodeURIComponent(q)}`).then((r) => setItems(Array.isArray(r) ? r : r.items || [])).catch(() => setItems([])), 200); return () => clearTimeout(tm); }, [v && v.id, v && v.locked, q]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -311,7 +311,8 @@ function PwTab() {
   if (!me) return <section className="m-card"><div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div></section>;
   if (me.member) return <section className="m-card"><h3><KeyRound size={16} />Shared with me</h3><SharedWithMe /></section>;
   if (!d) return <section className="m-card"><div className="small muted"><span className="hw-spinner hw-sm" aria-hidden="true" /> Loading …</div></section>;
-  if (!d.instances.length) return <section className="m-card"><h3><KeyRound size={16} />Passwords</h3><div className="small muted">No vault yet – create one in the full view under Passwords.</div></section>;
+  // Without the Passwords extension there is no vault to create – say so instead of pointing to a missing area
+  if (!d.instances.length) return <section className="m-card"><h3><KeyRound size={16} />Passwords</h3><div className="small muted">{d.missing ? 'Passwords are not installed – add the Passwords extension in the full view under Extensions.' : 'No vault yet – create one in the full view under Passwords.'}</div></section>;
   return (
     <section className="m-card">
       <h3><KeyRound size={16} />Passwords</h3>
@@ -412,6 +413,9 @@ function PhoneApp() {
   const [q, setQ] = useState('');
   const [tab, setTab] = useState(() => { try { return localStorage.getItem('hw-m-tab') || 'dienste'; } catch { return 'dienste'; } });
   useEffect(() => { try { localStorage.setItem('hw-m-tab', tab); } catch { /* blocked */ } }, [tab]);
+  // Installed extensions: "Players" and "Passwords" only with the extensions behind them (no empty tabs). Not readable
+  // (older Hostwerk, member without the right) → all tabs as before.
+  const exts = useApi('/extmarket', [], { live: false });
   useEffect(() => { applyBio(); return () => setStopGate(null); }, []);
   // Connected: remember the state (at most every 30 s); without a connection show the remembered state
   const saved = useRef(0);
@@ -422,7 +426,11 @@ function PhoneApp() {
   if (!o) return <div className="m-page"><div className="m-card muted">{connected ? 'Connecting …' : 'No connection – and no remembered state yet.'}</div></div>;
   const all = [...o.web, ...o.db, o.mail, ...kindItems(o), ...(o.apps || [])].filter(Boolean);
   const running = all.filter((s) => s.proc.state === 'running').length;
-  const TABS = [['dienste', LayoutDashboard, 'Services'], ['spieler', Users, 'Players'], ['aufgaben', CalendarClock, 'Tasks'], ['passwoerter', KeyRound, 'Passwords'], ['protokoll', ScrollText, 'Log'], ['mehr', Bot, 'More']];
+  const installed = exts.data && Array.isArray(exts.data.installed) ? exts.data.installed.filter((e) => e && !e.error && !e.disabled).map((e) => e.id) : null;
+  const has = (...ids) => !installed || ids.some((id) => installed.includes(id));
+  const TABS = [['dienste', LayoutDashboard, 'Services'], has('minecraft', 'game-servers') || mcServers(o).length ? ['spieler', Users, 'Players'] : null, ['aufgaben', CalendarClock, 'Tasks'], has('passwords') ? ['passwoerter', KeyRound, 'Passwords'] : null, ['protokoll', ScrollText, 'Log'], ['mehr', Bot, 'More']].filter(Boolean);
+  // A remembered tab that is gone (extension removed) → back to the services
+  const cur = TABS.some(([id]) => id === tab) ? tab : 'dienste';
   return (
     <div className="m-page">
       <header className="m-head">
@@ -431,13 +439,13 @@ function PhoneApp() {
         <a className="m-btn" href="#/" title="Full view" aria-label="Full view"><LayoutDashboard size={18} /></a>
       </header>
       {offline && <div className="m-card m-offline" role="status"><WifiOff size={16} /><span className="small">{last ? t('Offline – last state from {when}', { when: fmtDate(last.t) }) : t('Offline – buttons work again once connected.')}</span></div>}
-      {tab === 'dienste' && <ServicesTab o={o} jobs={jobs} offline={offline} />}
-      {tab === 'spieler' && <PlayersTab o={o} />}
-      {tab === 'aufgaben' && <TasksTab />}
-      {tab === 'protokoll' && <LogTab />}
-      {tab === 'passwoerter' && <PwTab />}
-      {tab === 'mehr' && <MoreTab q={q} setQ={setQ} />}
-      <nav className="m-tabs" aria-label="Areas">{TABS.map(([id, I, l]) => <button key={id} className={tab === id ? 'on' : ''} aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}><I size={20} /><span>{l}</span></button>)}</nav>
+      {cur === 'dienste' && <ServicesTab o={o} jobs={jobs} offline={offline} />}
+      {cur === 'spieler' && <PlayersTab o={o} />}
+      {cur === 'aufgaben' && <TasksTab />}
+      {cur === 'protokoll' && <LogTab />}
+      {cur === 'passwoerter' && <PwTab />}
+      {cur === 'mehr' && <MoreTab q={q} setQ={setQ} />}
+      <nav className="m-tabs" aria-label="Areas">{TABS.map(([id, I, l]) => <button key={id} className={cur === id ? 'on' : ''} aria-current={cur === id ? 'page' : undefined} onClick={() => setTab(id)}><I size={20} /><span>{l}</span></button>)}</nav>
     </div>
   );
 }
@@ -464,6 +472,10 @@ function PairPanel({ accounts }) {
   const [code, setCode] = useState(null);
   const [left, setLeft] = useState(0);
   const [i, setI] = useState(0);
+  // Last code of this window: "New code", another account or address replaces it – the old one stops at once on the server
+  const last = useRef(null);
+  // Window closed or left: an unused code stops at once instead of staying valid (and counting) for 5 minutes
+  useEffect(() => () => { if (last.current) post('/pwa/pair/cancel', { code: last.current }).catch(() => {}); }, []);
   useEffect(() => { const f = () => link.reload(); window.addEventListener('hw:pwa-reload', f); return () => window.removeEventListener('hw:pwa-reload', f); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useInterval(() => { if (code) { const s = Math.max(0, Math.round((code.until - Date.now()) / 1000)); setLeft(s); if (!s) setCode(null); } }, 1000);
   // Paired on the phone → the code is used up: hide it
@@ -471,15 +483,19 @@ function PairPanel({ accounts }) {
   if (!link.data) return <Loading />;
   const l = link.data;
   if (!l.ready) return <NeedRemote link={l} />;
-  const make = async () => { try { const c = await post('/pwa/pair', { userId, i }); setCode(c); setLeft(Math.round((c.until - Date.now()) / 1000)); } catch (e) { toast.error(e.message); } };
+  const make = async () => { try { const c = await post('/pwa/pair', { userId, i, replaces: last.current || undefined }); last.current = c.code; setCode(c); setLeft(Math.round((c.until - Date.now()) / 1000)); } catch (e) { toast.error(e.message); } };
   return (
     <div className="pwa-pair">
-      <div className="pwa-qr">{code ? <div className="phone-qr" role="img" aria-label="Pairing QR code" dangerouslySetInnerHTML={{ __html: code.svg }} /> : <div className="pwa-qr-empty"><QrCode size={40} /><span className="small">The QR code appears here – valid once, for 5 minutes.</span></div>}</div>
+      {/* The account in big letters right above the code – pairing a phone with the wrong account is easy to see */}
+      <div className="pwa-qr">{code && <div className="pwa-qr-acc"><span className="tiny muted">{t('For the account')}</span><b className="ellipsis" title={(accounts.find((a) => a.id === userId) || {}).name || code.user}>{(accounts.find((a) => a.id === userId) || {}).name || code.user}</b></div>}{code ? <div className="phone-qr" role="img" aria-label="Pairing QR code" dangerouslySetInnerHTML={{ __html: code.svg }} /> : <div className="pwa-qr-empty"><QrCode size={40} /><span className="small">The QR code appears here – valid once, for 5 minutes.</span></div>}</div>
       <div className="stack" style={{ gap: 10, minWidth: 0 }}>
         <Field label="Account on the phone" hint="The phone gets exactly the rights of this account – members from Team & roles only see what you share.">
           <select className="select" value={userId} onChange={(e) => { setUserId(e.target.value); setCode(null); }}>{accounts.map((a) => <option key={a.id} value={a.id}>{a.owner ? t('{name} (you, everything)', { name: a.name }) : t('{name} (member)', { name: a.name })}</option>)}</select>
         </Field>
-        {l.bases.length > 1 && <Field label="Address for the phone"><Seg value={String(i)} onChange={(v) => { setI(Number(v)); setCode(null); }} options={l.bases.map((b, n) => ({ id: String(n), label: new URL(b).host }))} /></Field>}
+        {/* Many addresses (several network adapters) do not fit side by side – then a list */}
+        {l.bases.length > 1 && <Field label="Address for the phone">{l.bases.length > 2
+          ? <select className="select" value={String(i)} onChange={(e) => { setI(Number(e.target.value)); setCode(null); }}>{l.bases.map((b, n) => <option key={b} value={String(n)}>{new URL(b).host}</option>)}</select>
+          : <Seg value={String(i)} onChange={(v) => { setI(Number(v)); setCode(null); }} options={l.bases.map((b, n) => ({ id: String(n), label: new URL(b).host }))} />}</Field>}
         {code ? (
           <>
             <div className="row-tight"><Clock size={14} /><span className="small">{t('Valid for {s} s – scan it with the phone camera.', { s: left })}</span></div>
@@ -505,10 +521,10 @@ function DeviceRow({ d, reload }) {
     <div className={`list-item pwa-device ${d.status}`}>
       <Smartphone size={18} className={d.status === 'pending' ? 'c-warn' : 'muted'} />
       <div className="grow" style={{ minWidth: 0 }}>
-        <div className="row-tight"><b className="ellipsis"><Keep>{d.name}</Keep></b>{d.status === 'pending' ? <span className="badge warn">waits for approval</span> : d.orphan ? <span className="badge err">account gone</span> : null}</div>
+        <div className="row-tight"><b className="ellipsis"><Keep>{d.name}</Keep></b>{d.status === 'pending' ? <span className="badge warn">waits for approval</span> : d.orphan ? <span className="badge err">account gone</span> : null}{d.stale && !d.orphan && <span className="badge err" title="The password of this account has changed since – this device no longer gets in. Block it and pair it again.">password changed</span>}</div>
         <div className="tiny muted ellipsis">{d.user ? <Keep>{d.user}</Keep> : '–'} · <Keep>{d.ua}</Keep> · {t('last seen {when}', { when: fmtDate(d.lastSeen) })}{d.lastIp ? <> · <Keep>{d.lastIp}</Keep></> : null}</div>
       </div>
-      {d.status === 'pending' && <Btn className="xs primary" icon={Check} onClick={async () => { try { await post(`/pwa/devices/${d.id}/approve`); reload(); toast.success('Approved'); } catch (e) { toast.error(e.message); } }}>Approve</Btn>}
+      {d.status === 'pending' && !d.stale && <Btn className="xs primary" icon={Check} onClick={async () => { try { await post(`/pwa/devices/${d.id}/approve`); reload(); toast.success('Approved'); } catch (e) { toast.error(e.message); } }}>Approve</Btn>}
       <button type="button" className="btn ghost xs icon" title="Rename" aria-label="Rename" onClick={rename}><Pencil /></button>
       <button type="button" className="btn ghost xs icon danger" title="Block" aria-label="Block" onClick={block}><Trash2 /></button>
     </div>
@@ -521,12 +537,13 @@ function AppTab() {
   useEffect(() => on('pwa-devices', () => v.reload()), []); // eslint-disable-line react-hooks/exhaustive-deps
   if (!v.data) return <Loading />;
   const d = v.data;
-  const pending = d.devices.filter((x) => x.status === 'pending');
+  // Only devices that can still be approved – with a changed password they can only be blocked (shown with their badge)
+  const pending = d.devices.filter((x) => x.status === 'pending' && !x.stale && !x.orphan);
   const save = async (patch) => { try { v.setData(await put('/pwa/settings', patch)); } catch (e) { toast.error(e.message); } };
   return (
     <div className="stack">
       {pending.length > 0 && <Callout kind="warn" title={t('{n} device(s) wait for approval', { n: pending.length })}>Only approve devices you know – someone signed in with this account on a new phone.</Callout>}
-      <div className="cols">
+      <div className="cols pwa-cols">
         <div className="card span-2">
           <div className="card-head"><QrCode size={16} /><h3>Pair a phone</h3></div>
           <div className="card-body"><PairPanel accounts={d.accounts} /></div>
@@ -551,8 +568,9 @@ function AppTab() {
         </div>
         <div className="card span-2">
           <div className="card-head"><ShieldAlert size={16} /><h3>Security log</h3><span className="badge">{d.log.length}</span></div>
-          {d.log.length === 0 ? <div className="card-body"><TileEmpty icon={ShieldCheck} text="Nothing happened yet." /></div> : d.log.slice(0, 30).map((e) => { const [label, kind] = EVENTS[e.event] || [e.event, '']; return (
-            <div key={`${e.t}-${e.event}`} className="list-item pwa-log">
+          {d.log.length === 0 ? <div className="card-body"><TileEmpty icon={ShieldCheck} text="Nothing happened yet." /></div> : d.log.slice(0, 30).map((e, n) => { const [label, kind] = EVENTS[e.event] || [e.event, '']; return (
+            // "Block all" writes several entries in the same millisecond – the position keeps the key unique
+            <div key={`${e.t}-${e.event}-${n}`} className="list-item pwa-log">
               <span className={`badge ${kind}`}>{label}</span>
               <span className="grow small ellipsis"><Keep>{[e.device, e.user, e.ip, e.ua].filter(Boolean).join(' · ')}</Keep></span>
               <span className="tiny muted">{fmtDate(e.t)}</span>

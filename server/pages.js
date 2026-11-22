@@ -72,9 +72,9 @@ function show(k,t){msg.className=k;msg.textContent=t;msg.hidden=false;}
 if(!/^[A-Za-z0-9_-]{22}$/.test(code)){btn.disabled=true;show('err',T.nocode);return;}
 btn.addEventListener('click',function(){btn.disabled=true;show('note',T.busy);
 fetch('${BASE}pair',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({code:code,name:name.value})})
-.then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||T.fail);return j;});})
+.then(function(r){return r.json().catch(function(){return {};}).then(function(j){if(!r.ok)throw new Error(j.error||T.fail);return j;});})
 .then(function(){code='';show('ok',T.ok);setTimeout(function(){location.replace('/#/handy');},700);})
-.catch(function(e){code='';show('err',e.message||T.fail);});});})();`;
+.catch(function(e){code='';show('err',(e instanceof TypeError?'':e.message)||T.fail);});});})();`;
   const body = `<h1>${esc(t('Pair this phone'))}</h1><p>${esc(t('This phone stays signed in to Hostwerk – with the rights of the account the code was made for. You can block it on the PC at any time.'))}</p>
 <label for="name">${esc(t('Name of this device'))}</label><input id="name" maxlength="60" value="${esc(label)}" autocomplete="off">
 <button id="go" class="btn" type="button">${esc(t('Pair and open Hostwerk'))}</button><div id="msg" hidden></div>

@@ -202,10 +202,13 @@ test('nothing secret is stored: no device secret, no pairing code – only SHA-2
   assert.ok(!JSON.stringify(devices.view()).includes(devices.list[0].hash), 'the view never shows the fingerprint either');
 });
 
-test('limits: at most 5 open codes; alerts and change log for new devices', () => {
+test('limits: at most 5 open codes (the oldest stops); alerts and change log for new devices', () => {
   const { devices, alerts, audits } = fakeHost();
-  for (let i = 0; i < 5; i++) devices.createCode({});
-  assert.throws(() => devices.createCode({}), (e) => e.status === 429);
+  let t0 = 0;
+  devices.now = () => 1000 + t0++; // each code a moment later
+  const codes = Array.from({ length: 6 }, () => devices.createCode({}).code);
+  assert.strictEqual(devices.codes.size, 5, 'never more than 5 open');
+  assert.throws(() => devices.pair(req(), { code: codes[0] }), (e) => e.status === 401, 'oldest code no longer valid');
   const f = fakeHost();
   f.devices.pair(req(), { code: f.devices.createCode({}).code });
   assert.ok(f.alerts.length === 1 && f.audits.length === 1);
@@ -215,4 +218,45 @@ test('limits: at most 5 open codes; alerts and change log for new devices', () =
 test('device names from the browser', () => {
   assert.strictEqual(deviceLabel(UA_PHONE), 'Android 14 · Chrome');
   assert.strictEqual(deviceLabel('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'), 'iPhone · Safari');
+});
+
+test('"keep signed in" twice on the same phone keeps the one waiting device (no second entry, no flooding)', () => {
+  const { devices } = fakeHost();
+  const s = { user: 'anna', userId: 'm1' };
+  const r = devices.remember(req(), s, {});
+  const again = devices.remember(withKey(keyOf(r.cookie)), s, {});
+  assert.strictEqual(again.cookie, undefined); assert.strictEqual(again.device.id, r.device.id);
+  assert.strictEqual(devices.list.length, 1);
+  const other = devices.remember(withKey(keyOf(r.cookie)), { user: 'admin' }, {});
+  assert.notStrictEqual(other.device.id, r.device.id, 'another account on the same phone gets its own device');
+});
+
+test('attack: a device waiting for approval cannot be approved after a password change – it is marked stale', () => {
+  const { devices, users } = fakeHost();
+  const r = devices.remember(req(), { user: 'anna', userId: 'm1' }, {});
+  users.list[0].passHash = 'scrypt:anna:2';
+  assert.strictEqual(devices.view().devices[0].stale, true);
+  assert.throws(() => devices.approve(r.device.id), (e) => e.status === 409);
+  assert.strictEqual(devices.verify(withKey(keyOf(r.cookie))), null);
+});
+
+test('"New code" replaces the previous code: the old one stops at once and does not count towards the limit', () => {
+  const { devices } = fakeHost();
+  let prev = devices.createCode({}).code;
+  for (let n = 0; n < 8; n++) { const c = devices.createCode({ replaces: prev }); prev = c.code; }
+  assert.strictEqual(devices.codes.size, 1, 'only the newest code is open');
+  const first = devices.createCode({}).code;
+  const second = devices.createCode({ replaces: first }).code;
+  assert.throws(() => devices.pair(req(), { code: first }), (e) => e.status === 401);
+  assert.ok(devices.pair(req(), { code: second }).cookie);
+});
+
+test('closing the window cancels its code: it no longer pairs, foreign or malformed values change nothing', () => {
+  const { devices } = fakeHost();
+  const keep = devices.createCode({}).code;
+  const gone = devices.createCode({}).code;
+  assert.strictEqual(devices.cancelCode(gone), true);
+  assert.strictEqual(devices.cancelCode('x'), false); assert.strictEqual(devices.cancelCode({}), false); assert.strictEqual(devices.cancelCode('A'.repeat(22)), false);
+  assert.throws(() => devices.pair(req(), { code: gone }), (e) => e.status === 401);
+  assert.ok(devices.pair(req(), { code: keep }).cookie);
 });
